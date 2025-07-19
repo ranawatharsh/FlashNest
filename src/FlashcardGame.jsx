@@ -50,6 +50,7 @@ export default function FlashcardGame() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [imageSrc, setImageSrc] = useState('');
   const [imageLoading, setImageLoading] = useState(false);
+  const [error, setError] = useState(null); // State to hold any errors
 
   const userId = auth.currentUser?.uid;
 
@@ -71,7 +72,7 @@ export default function FlashcardGame() {
   // Generate flashcard deck with AI
   const generateDeck = useCallback(async () => {
     if (!GEMINI_API_KEY) {
-        console.error("--- DECK GENERATION FAILED: Gemini API Key is missing. ---");
+        setError("Deck Generation Error: Gemini API Key is missing.");
         setGenerating(false); setLoading(false); return;
     }
     setGenerating(true);
@@ -94,8 +95,9 @@ export default function FlashcardGame() {
         const generatedText = result.candidates[0].content.parts[0].text;
         const generatedDeck = JSON.parse(generatedText);
         setDeck(generatedDeck);
-    } catch (error) {
-        console.error("--- DECK GENERATION FAILED ---", error);
+    } catch (err) {
+        console.error("--- DECK GENERATION FAILED ---", err);
+        setError(`Deck Generation Error: ${err.message}`);
     } finally {
         setGenerating(false); setLoading(false);
     }
@@ -126,8 +128,9 @@ export default function FlashcardGame() {
           } else {
             setImageSrc(`https://placehold.co/600x400/E2E8F0/4A5568?text=${encodeURIComponent(currentItem)}`);
           }
-        } catch (error) {
-          console.error("--- IMAGE FETCH FAILED ---", error);
+        } catch (err) {
+          console.error("--- IMAGE FETCH FAILED ---", err);
+          setError(`Image Fetch Error: ${err.message}`);
         } finally {
           setImageLoading(false);
         }
@@ -171,6 +174,9 @@ export default function FlashcardGame() {
     }
   };
 
+  if (error) {
+    return <div className="text-center p-8 text-red-500 font-semibold">{error}</div>;
+  }
   if (loading || generating) {
     return <div className="flex items-center justify-center min-h-screen bg-gray-100"><Loader text="Generating your flashcard deck..." /></div>;
   }
