@@ -3,9 +3,10 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from './firebase';
 
-// Read API keys from environment variables
+// Hardcoded API keys for debugging
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const UNSPLASH_ACCESS_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
+
 
 // --- Helper Components ---
 const Loader = ({ text }) => (
@@ -50,7 +51,7 @@ export default function FlashcardGame() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [imageSrc, setImageSrc] = useState('');
   const [imageLoading, setImageLoading] = useState(false);
-  const [error, setError] = useState(null); // State to hold any errors
+  const [error, setError] = useState(null);
 
   const userId = auth.currentUser?.uid;
 
@@ -71,10 +72,6 @@ export default function FlashcardGame() {
 
   // Generate flashcard deck with AI
   const generateDeck = useCallback(async () => {
-    if (!GEMINI_API_KEY) {
-        setError("Deck Generation Error: Gemini API Key is missing.");
-        setGenerating(false); setLoading(false); return;
-    }
     setGenerating(true);
     const prompt = `Create a JSON array of 15 flashcards for the category "${category}". Each object must have these exact keys: "item" (string), "options" (an array of 4 strings, one of which must be the correct answer), and "correctAnswer" (a string that exactly matches one of the options).`;
     
@@ -110,11 +107,6 @@ export default function FlashcardGame() {
   // Generate image for the current card using Unsplash
   useEffect(() => {
     if (deck.length > 0 && currentCardIndex < deck.length) {
-      if (!UNSPLASH_ACCESS_KEY) {
-        console.error("--- IMAGE GENERATION FAILED: Unsplash Access Key is missing. ---");
-        setImageSrc(`https://placehold.co/600x400/E2E8F0/4A5568?text=Add+Unsplash+Key`);
-        return;
-      }
       const currentItem = deck[currentCardIndex].correctAnswer; 
       const fetchImage = async () => {
         setImageLoading(true);
